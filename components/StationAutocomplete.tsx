@@ -11,7 +11,8 @@ interface StationAutocompleteProps {
   invalid?: boolean;
 }
 
-const DEBOUNCE_MS = 250;
+const DEBOUNCE_MS = 400;
+const MIN_QUERY_LENGTH = 3;
 
 export default function StationAutocomplete({
   label,
@@ -24,7 +25,7 @@ export default function StationAutocomplete({
   const [options, setOptions] = useState<Station[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errored, setErrored] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const inputId = useId();
@@ -51,15 +52,16 @@ export default function StationAutocomplete({
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     const trimmed = text.trim();
-    if (trimmed.length < 2) {
+    if (trimmed.length < MIN_QUERY_LENGTH) {
       setOptions([]);
       setOpen(false);
       setLoading(false);
+      setErrorMessage(null);
       return;
     }
 
     setLoading(true);
-    setErrored(false);
+    setErrorMessage(null);
     debounceRef.current = setTimeout(async () => {
       abortRef.current?.abort();
       const controller = new AbortController();
@@ -70,15 +72,18 @@ export default function StationAutocomplete({
           { signal: controller.signal }
         );
         const data = await res.json();
-        if (!res.ok) {
-          setErrored(true);
+        if (res.status === 429 || data.kind === "RATE_LIMIT") {
+          setErrorMessage("Please wait a moment and try again.");
+          setOptions([]);
+        } else if (!res.ok) {
+          setErrorMessage("Couldn't load stations. Try again.");
           setOptions([]);
         } else {
           setOptions(data.stations ?? []);
         }
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
-          setErrored(true);
+          setErrorMessage("Couldn't load stations. Try again.");
           setOptions([]);
         }
       } finally {
@@ -156,18 +161,18 @@ export default function StationAutocomplete({
           {loading && (
             <li className="px-4 py-3 text-sm text-neutral-500">Searching…</li>
           )}
-          {!loading && errored && (
-            <li className="px-4 py-3 text-sm text-red-600">
-              Couldn&apos;t load stations. Try again.
+          {!loading && errorMessage && (
+            <li className="px-4 py-3 text-sm text-red-600" role="alert">
+              {errorMessage}
             </li>
           )}
-          {!loading && !errored && options.length === 0 && (
+          {!loading && !errorMessage && options.length === 0 && (
             <li className="px-4 py-3 text-sm text-neutral-500">
               No matching stations.
             </li>
           )}
           {!loading &&
-            !errored &&
+            !errorMessage &&
             options.map((station, i) => (
               <li
                 key={station.code}
