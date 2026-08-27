@@ -33,11 +33,6 @@ export default function StationAutocomplete({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Keep the visible text in sync if the parent resets the selection externally.
-  useEffect(() => {
-    setQuery(value?.name ?? "");
-  }, [value]);
-
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
