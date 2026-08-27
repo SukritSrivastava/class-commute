@@ -140,7 +140,7 @@ export default function StationAutocomplete({
         onChange={(e) => handleInputChange(e.target.value)}
         onFocus={() => options.length > 0 && setOpen(true)}
         onKeyDown={handleKeyDown}
-        className={`h-12 w-full rounded-xl border bg-white px-4 text-base text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/30 dark:bg-neutral-900 dark:text-neutral-100 ${
+        className={`h-12 w-full rounded-xl border bg-white px-4 text-base text-neutral-900 outline-none transition-colors placeholder:text-neutral-500 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/30 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500 ${
           invalid
             ? "border-red-500"
             : "border-neutral-300 dark:border-neutral-700"

@@ -18,7 +18,7 @@ export default function ResultCard({ train, variant }: ResultCardProps) {
       }`}
     >
       {isBest && (
-        <span className="mb-2 inline-flex items-center rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+        <span className="mb-2 inline-flex items-center rounded-full bg-emerald-700 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-white">
           Best pick
         </span>
       )}

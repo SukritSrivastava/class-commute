@@ -124,7 +124,7 @@ export default function Home() {
                 type="button"
                 onClick={swapStations}
                 aria-label="Swap home and college stations"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-500 transition-transform hover:text-teal-600 active:scale-90 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-500 transition-transform hover:text-teal-600 active:scale-90 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400"
               >
                 <svg
                   aria-hidden
@@ -198,7 +198,7 @@ export default function Home() {
           <button
             type="submit"
             disabled={status === "loading"}
-            className="flex h-14 w-full items-center justify-center rounded-xl bg-teal-600 text-base font-semibold text-white transition-colors hover:bg-teal-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
+            className="flex h-14 w-full items-center justify-center rounded-xl bg-teal-700 text-base font-semibold text-white transition-colors hover:bg-teal-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {status === "loading" ? "Finding your train…" : "Find my train"}
           </button>
@@ -238,7 +238,7 @@ export default function Home() {
 
               {result.alternatives.length > 0 && (
                 <div className="pt-2">
-                  <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                  <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                     Earlier backups
                   </h2>
                   <div className="space-y-2">
