@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Build output, not source: the bundled service worker is generated from
+    // `app/sw.ts` by `@serwist/cli` and is minified. Lint the source instead.
+    "public/sw.js",
+    "public/sw.js.map",
   ]),
 ]);
 

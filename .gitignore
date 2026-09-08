@@ -43,3 +43,34 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# bundle analyzer output
+/.next/analyze/
+
+# station generator run logs (the generated JSON itself IS committed)
+/.stations-refresh.log
+
+# acceptance-run server log
+/dev-acceptance.log
+
+# identity preview render (regenerate with IDENTITY_PREVIEW=1)
+/identity-preview.png
+
+# service worker build output (generated from app/sw.ts by `npm run build`).
+# The icons in public/icons/ ARE committed — those are generated once, by hand.
+/public/sw.js
+/public/sw.js.map
+
+# acceptance-run server log
+/offline-acceptance.log
+
+# offline proof render (regenerate by running the offline acceptance spec)
+/offline-proof.png
+/interchange-proof.png
+/interchange*.log

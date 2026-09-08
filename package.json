@@ -4,23 +4,49 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && serwist build serwist.config.mjs",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "stations:refresh": "node --env-file=.env.local scripts/build-stations.mts",
+    "icons:build": "node scripts/build-icons.mts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "analyze": "cross-env ANALYZE=true next build --webpack"
   },
   "dependencies": {
+    "@serwist/next": "^9.5.12",
+    "clsx": "^2.1.1",
+    "lenis": "^1.3.26",
+    "motion": "^13.2.0",
     "next": "16.3.3",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "serwist": "^9.5.12",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.3.4",
+    "@playwright/test": "^1.63.0",
+    "@serwist/cli": "^9.5.12",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^24.13.3",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.1.1",
+    "cross-env": "^10.1.0",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
+    "fake-indexeddb": "^6.2.5",
+    "jsdom": "^30.0.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.0"
   }
 }

@@ -1,29 +1,302 @@
 @import "tailwindcss";
 
+/* ===========================================================================
+   Class Commute — visual identity
+   ---------------------------------------------------------------------------
+   Neon on deep night. The reference is the restraint, not the spectacle: a
+   small palette, one easing curve, two durations, and type that is confident
+   enough to sit still. Almost nothing moves; the few things that do are the
+   things worth noticing.
+
+   This is a utility opened at 7:40am by someone who is late. Motion may
+   accompany information appearing. It may never gate it — every primitive here
+   renders its content immediately and animates only opacity and transform.
+   =========================================================================== */
+
+/* Dark is the only committed theme. This palette does not survive a light mode,
+   so `dark:` is unconditional rather than tied to the system preference — the
+   variant still exists so component code reads normally, it just always wins. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* --- Surfaces -------------------------------------------------------- */
+  --color-night: #0a0510; /* base — near-black, violet undertone */
+  --color-night-2: #150b20; /* raised surface */
+  --color-night-3: #1f1030; /* hover / active */
+
+  /* --- Accents --------------------------------------------------------- */
+  --color-magenta: #ff2d78; /* primary accent */
+  --color-orange: #ff7a29; /* secondary accent */
+  --color-gold: #ffc24b; /* highlight, best pick */
+  --color-cyan: #21d4e0; /* informational */
+  --color-violet: #7b2ff7; /* depth, gradient anchor */
+
+  /* --- Text -----------------------------------------------------------
+     Three tiers, all measured against the *lightest* surface (night-3), which
+     is the worst case. Every one clears WCAG AA for body text:
+       ink       16.17:1    ink-muted  6.86:1    ink-dim  5.04:1
+     There is deliberately no fourth, dimmer tier — anything quieter than
+     ink-dim fails, and a token that fails is a token someone will reach for. */
+  --color-ink: #f6f2fa;
+  --color-ink-muted: #a79bbc;
+  --color-ink-dim: #8f82a8;
+
+  /* Text placed *on* a filled accent. Counter-intuitive but measured: white on
+     magenta is only 3.56:1 and on gold 1.61:1, so filled accents take near-black
+     text. Violet is the sole exception and takes `--color-ink` (5.85:1). */
+  --color-on-accent: #0a0510;
+
+  /* --- Lines -----------------------------------------------------------
+     Hairlines, never solid grey. A grey border on a violet-tinted black reads
+     as a smudge; a low-alpha white reads as an edge catching light. */
+  --color-hairline: rgb(255 255 255 / 0.08);
+  --color-hairline-strong: rgb(255 255 255 / 0.14);
+
+  /* --- Gradients ------------------------------------------------------- */
+  --gradient-sunset: linear-gradient(
+    100deg,
+    #7b2ff7,
+    #ff2d78,
+    #ff7a29,
+    #ffc24b
+  );
+  --gradient-dusk: linear-gradient(180deg, #150b20, #0a0510);
+
+  /* --- Motion ---------------------------------------------------------
+     One curve. That long deceleration is most of the "smooth" feeling, and it
+     only reads as intentional because nothing else competes with it. Nothing
+     in this codebase invents its own easing. */
+  --ease-signature: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Two durations. Interface feedback is fast enough to feel like a response;
+     content arriving is slow enough to feel weighted. There is no third. */
+  --duration-ui: 200ms;
+  --duration-content: 600ms;
+
+  /* The ramp between staggered children. */
+  --stagger-step: 60ms;
+
+  /* --- Type ------------------------------------------------------------ */
+  --font-display: var(--font-archivo), "Arial Narrow", system-ui, sans-serif;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   --------------------------------------------------------------------------- */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Tells the UA to render form controls, scrollbars and the like dark. Without
+     it a native <input type="time"> ships a white calendar/clock picker into
+     the middle of all this. */
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Painted explicitly: a transparent body borrows the host's ground and the
+     whole palette stops making sense. */
+  background-color: var(--color-night);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
+
+/* Selection in the accent, because a default blue selection on this palette
+   looks like a bug. Near-black on magenta — same 5.66:1 as any accent fill. */
+::selection {
+  background-color: var(--color-magenta);
+  color: var(--color-on-accent);
+}
+
+/* One focus treatment everywhere, in cyan: it is the only accent not otherwise
+   spoken for, so a focus ring can never be confused with a state. */
+:focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   Texture
+
+   Two layers, both fixed, both inert. They are what stop a dark page reading as
+   a flat black rectangle, and together they cost one gradient and one 404-byte
+   data URI — no images, no requests.
+   --------------------------------------------------------------------------- */
+
+/* A soft magenta/violet bloom anchored *above* the viewport, so the light
+   appears to come from off-screen rather than from a blob on the page. */
+.texture-bloom {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60rem 34rem at 50% -12%,
+      rgb(123 47 247 / 0.32),
+      transparent 68%
+    ),
+    radial-gradient(
+      44rem 26rem at 82% -4%,
+      rgb(255 45 120 / 0.16),
+      transparent 66%
+    );
+}
+
+/* Film grain. `overlay` lets it lift the near-blacks without touching the
+   neons, which is the difference between "expensive" and "dusty". Opacity is
+   deliberately low enough that you notice it only when it is removed. */
+.texture-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNDAiIGhlaWdodD0iMTQwIiB2aWV3Qm94PSIwIDAgMTQwIDE0MCI+PGZpbHRlciBpZD0ibiI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuODIiIG51bU9jdGF2ZXM9IjMiIHN0aXRjaFRpbGVzPSJzdGl0Y2giLz48ZmVDb2xvck1hdHJpeCB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjE0MCIgaGVpZ2h0PSIxNDAiIGZpbHRlcj0idXJsKCNuKSIvPjwvc3ZnPg==");
+  background-repeat: repeat;
+  background-size: 140px 140px;
+}
+
+/* ---------------------------------------------------------------------------
+   Utilities
+   --------------------------------------------------------------------------- */
+
+@utility bg-sunset {
+  background-image: var(--gradient-sunset);
+}
+
+@utility bg-dusk {
+  background-image: var(--gradient-dusk);
+}
+
+/* Sunset gradient as text fill. For display type only — the gradient crosses
+   from violet (3.06:1 on night-3) to gold (11.12:1), so the violet end fails
+   body contrast. Large, heavy type clears the 3:1 large-text threshold along
+   the whole ramp; small text set this way does not. */
+@utility text-sunset {
+  background-image: var(--gradient-sunset);
+  background-clip: text;
+  color: transparent;
+}
+
+/* Hairline helpers, so nobody hand-writes an rgba border again. */
+@utility border-hairline {
+  border-color: var(--color-hairline);
+}
+
+@utility divide-hairline {
+  border-color: var(--color-hairline);
+}
+
+/* Display type: heavy, condensed, tight. The tracking is the whole trick — at
+   800 weight and this size, default spacing reads soft. */
+@utility type-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 87.5%;
+  letter-spacing: -0.03em;
+  line-height: 0.92;
+}
+
+/* Anything that aligns in a column or ticks: times, counts, buffers. Tabular
+   figures stop numbers from shifting sideways as they change. */
+@utility type-numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Train times are this app's hero content, so they are set in display weight at
+   a size that is frankly slightly too large. That single decision carries more
+   of the aesthetic than any animation. */
+@utility type-time {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 87.5%;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.035em;
+  line-height: 0.9;
+}
+
+/* ---------------------------------------------------------------------------
+   Motion primitives
+
+   The CSS half of `components/motion/*`. Kept here rather than in the
+   components so there is exactly one definition of what "arriving" looks like,
+   and so the reduced-motion escape hatch below can reach all of it.
+   --------------------------------------------------------------------------- */
+
+/* Reveal: fade plus a 12px rise. The element is always in the DOM and always
+   selectable — only opacity and transform change, so nothing is gated behind
+   an observer that might never fire. */
+[data-reveal] {
+  transition:
+    opacity var(--duration-content) var(--ease-signature),
+    transform var(--duration-content) var(--ease-signature);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+[data-reveal="hidden"] {
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+}
+
+[data-reveal="shown"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Press: tactile feedback, no JavaScript. Scale is doing the work; the
+   brightness lift is what keeps a dark surface from looking dead on touch. */
+[data-press] {
+  transition:
+    transform var(--duration-ui) var(--ease-signature),
+    filter var(--duration-ui) var(--ease-signature);
+  -webkit-tap-highlight-color: transparent;
+}
+
+[data-press]:active:not(:disabled) {
+  transform: scale(0.97);
+  filter: brightness(1.08);
+}
+
+/* ---------------------------------------------------------------------------
+   Lenis
+
+   Momentum scrolling. These rules only apply while Lenis is actually running —
+   it adds `.lenis` to <html> itself — so nothing here affects a page where
+   smooth scrolling is off or was never started.
+   --------------------------------------------------------------------------- */
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced motion
+
+   Not "shortened" — off. Someone who has asked for this at the OS level has
+   asked for stillness, and a 10ms version of an animation is still an
+   animation. Reveal snaps to its final state, which is also the fallback if
+   JavaScript never runs at all.
+   --------------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -32,6 +305,17 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
     scroll-behavior: auto !important;
+  }
+
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  [data-press]:active:not(:disabled) {
+    transform: none;
+    filter: none;
   }
 }

@@ -1,0 +1,558 @@
+{
+  "generatedAt": "2026-09-08T15:17:26.419Z",
+  "source": "RailRadar https://api.railradar.in/v1/lookup/search/stations",
+  "stations": [
+    {
+      "code": "AIRL",
+      "name": "Airavali"
+    },
+    {
+      "code": "ABH",
+      "name": "Ambarnath"
+    },
+    {
+      "code": "ABY",
+      "name": "Ambivli"
+    },
+    {
+      "code": "ADH",
+      "name": "Andheri",
+      "aliases": [
+        "andheri"
+      ]
+    },
+    {
+      "code": "ASO",
+      "name": "Asangaon"
+    },
+    {
+      "code": "ATG",
+      "name": "Atgaon"
+    },
+    {
+      "code": "BUD",
+      "name": "Badlapur"
+    },
+    {
+      "code": "BA",
+      "name": "Bandra Jn",
+      "aliases": [
+        "bandra",
+        "bandra terminus",
+        "bdts"
+      ]
+    },
+    {
+      "code": "BDTS",
+      "name": "Bandra Terminus"
+    },
+    {
+      "code": "BAP",
+      "name": "Belapur"
+    },
+    {
+      "code": "BEPR",
+      "name": "Belapur C. B.d"
+    },
+    {
+      "code": "BND",
+      "name": "Bhandup"
+    },
+    {
+      "code": "BYR",
+      "name": "Bhayandar"
+    },
+    {
+      "code": "BVS",
+      "name": "Bhivpuri Road"
+    },
+    {
+      "code": "BOR",
+      "name": "Boisar"
+    },
+    {
+      "code": "BVI",
+      "name": "Borivali",
+      "aliases": [
+        "borivli"
+      ]
+    },
+    {
+      "code": "BY",
+      "name": "Byculla",
+      "aliases": [
+        "bhayakhala",
+        "bhaykhala"
+      ]
+    },
+    {
+      "code": "CMBR",
+      "name": "Chembur"
+    },
+    {
+      "code": "CHF",
+      "name": "Chunabhatti"
+    },
+    {
+      "code": "CCG",
+      "name": "Churchgate",
+      "aliases": [
+        "bmby church gte",
+        "cg",
+        "church gate",
+        "churchgate"
+      ]
+    },
+    {
+      "code": "CTGN",
+      "name": "Cotton Green"
+    },
+    {
+      "code": "DR",
+      "name": "Dadar",
+      "aliases": [
+        "dadar central",
+        "dadar western",
+        "ddr"
+      ]
+    },
+    {
+      "code": "DRD",
+      "name": "Dahanu Road"
+    },
+    {
+      "code": "DIC",
+      "name": "Dahisar"
+    },
+    {
+      "code": "DIVA",
+      "name": "Diva"
+    },
+    {
+      "code": "DKRD",
+      "name": "Dockyard Road"
+    },
+    {
+      "code": "DLV",
+      "name": "Dolavali"
+    },
+    {
+      "code": "DI",
+      "name": "Dombivali"
+    },
+    {
+      "code": "GNSL",
+      "name": "Ghansoli"
+    },
+    {
+      "code": "GC",
+      "name": "Ghat Kopar",
+      "aliases": [
+        "ghat kopar",
+        "ghatkopar"
+      ]
+    },
+    {
+      "code": "GMN",
+      "name": "Goregaon"
+    },
+    {
+      "code": "GNO",
+      "name": "Goregaon Road (H)"
+    },
+    {
+      "code": "GV",
+      "name": "Govandi"
+    },
+    {
+      "code": "JOS",
+      "name": "Jogeshwari"
+    },
+    {
+      "code": "JNJ",
+      "name": "Juinagar"
+    },
+    {
+      "code": "KLVA",
+      "name": "Kalva"
+    },
+    {
+      "code": "KXE",
+      "name": "Kalyan Chak"
+    },
+    {
+      "code": "KYN",
+      "name": "Kalyan Jn",
+      "aliases": [
+        "kalyan"
+      ]
+    },
+    {
+      "code": "KILE",
+      "name": "Kandivli"
+    },
+    {
+      "code": "KJRD",
+      "name": "Kanjur Marg"
+    },
+    {
+      "code": "KJT",
+      "name": "Karjat"
+    },
+    {
+      "code": "KSRA",
+      "name": "Kasara"
+    },
+    {
+      "code": "KLY",
+      "name": "Kelavli"
+    },
+    {
+      "code": "KLV",
+      "name": "Kelve Road"
+    },
+    {
+      "code": "KDV",
+      "name": "Khadavli"
+    },
+    {
+      "code": "KNDS",
+      "name": "Khandeshwar"
+    },
+    {
+      "code": "KHAR",
+      "name": "Khar Road"
+    },
+    {
+      "code": "KE",
+      "name": "Khardi"
+    },
+    {
+      "code": "KHAG",
+      "name": "Kharghar"
+    },
+    {
+      "code": "KARP",
+      "name": "Kharkopar"
+    },
+    {
+      "code": "KHPI",
+      "name": "Khopoli"
+    },
+    {
+      "code": "KOPR",
+      "name": "Kopar"
+    },
+    {
+      "code": "KORU",
+      "name": "Kopar (upper Level)"
+    },
+    {
+      "code": "KPHN",
+      "name": "Kopar Khairna"
+    },
+    {
+      "code": "CLA",
+      "name": "Kurla Jn",
+      "aliases": [
+        "kurla",
+        "lokmanya tilak",
+        "ltt"
+      ]
+    },
+    {
+      "code": "LWJ",
+      "name": "Lowjee"
+    },
+    {
+      "code": "MDD",
+      "name": "Malad"
+    },
+    {
+      "code": "MNKD",
+      "name": "Mankhurd"
+    },
+    {
+      "code": "MANR",
+      "name": "Mansarovar"
+    },
+    {
+      "code": "MSD",
+      "name": "Masjid"
+    },
+    {
+      "code": "MTN",
+      "name": "Matunga"
+    },
+    {
+      "code": "MIRA",
+      "name": "Mira Road"
+    },
+    {
+      "code": "MLND",
+      "name": "Mulund",
+      "aliases": [
+        "mulund"
+      ]
+    },
+    {
+      "code": "CYR",
+      "name": "Mumbai (charni Road)"
+    },
+    {
+      "code": "CHG",
+      "name": "Mumbai (Chinchpokli)"
+    },
+    {
+      "code": "CRD",
+      "name": "Mumbai (currey Road)"
+    },
+    {
+      "code": "DDR",
+      "name": "Mumbai (Dadar)"
+    },
+    {
+      "code": "GTR",
+      "name": "Mumbai (grant Road)"
+    },
+    {
+      "code": "PL",
+      "name": "Mumbai (lower Parel)"
+    },
+    {
+      "code": "MM",
+      "name": "Mumbai (Mahim) Jn"
+    },
+    {
+      "code": "MEL",
+      "name": "Mumbai (marine Lines)"
+    },
+    {
+      "code": "MRU",
+      "name": "Mumbai (matunga Road)"
+    },
+    {
+      "code": "RRD",
+      "name": "Mumbai (reay Road)"
+    },
+    {
+      "code": "SVE",
+      "name": "Mumbai (Sewri)"
+    },
+    {
+      "code": "MMCT",
+      "name": "Mumbai Central"
+    },
+    {
+      "code": "BCL",
+      "name": "Mumbai Central (L)"
+    },
+    {
+      "code": "CSMT",
+      "name": "Mumbai CSMT",
+      "aliases": [
+        "bombay vt",
+        "chhatrapati shivaji",
+        "chhatrapati shivaji maharaj terminus",
+        "cst",
+        "cstm",
+        "mumbai cst",
+        "shivaji terminus",
+        "victoria terminus",
+        "vt"
+      ]
+    },
+    {
+      "code": "MBQ",
+      "name": "Mumbra"
+    },
+    {
+      "code": "NGTN",
+      "name": "Nagothane"
+    },
+    {
+      "code": "NHU",
+      "name": "Nahur"
+    },
+    {
+      "code": "NIG",
+      "name": "Naigaon"
+    },
+    {
+      "code": "NSP",
+      "name": "Nalla-Sopara"
+    },
+    {
+      "code": "NRL",
+      "name": "Neral"
+    },
+    {
+      "code": "NRLN",
+      "name": "Neral Narrow Gauge passenger platform"
+    },
+    {
+      "code": "NEU",
+      "name": "Nerul"
+    },
+    {
+      "code": "OMB",
+      "name": "Oombermali"
+    },
+    {
+      "code": "PDI",
+      "name": "Palasdhari"
+    },
+    {
+      "code": "PLG",
+      "name": "Palghar"
+    },
+    {
+      "code": "PNVL",
+      "name": "Panvel",
+      "aliases": [
+        "panvel"
+      ]
+    },
+    {
+      "code": "PR",
+      "name": "Parel"
+    },
+    {
+      "code": "PBHD",
+      "name": "Prabhadevi"
+    },
+    {
+      "code": "RABE",
+      "name": "Rabada"
+    },
+    {
+      "code": "RMAR",
+      "name": "Ram Mandir"
+    },
+    {
+      "code": "SNRD",
+      "name": "Sandhurst Road"
+    },
+    {
+      "code": "SNCR",
+      "name": "Sanpada"
+    },
+    {
+      "code": "STC",
+      "name": "Santa Cruz"
+    },
+    {
+      "code": "SAH",
+      "name": "Saphale"
+    },
+    {
+      "code": "SWDK",
+      "name": "Seawoods- Darave Karave"
+    },
+    {
+      "code": "SHAD",
+      "name": "Shahad"
+    },
+    {
+      "code": "SHLU",
+      "name": "Shelu"
+    },
+    {
+      "code": "SION",
+      "name": "Sion",
+      "aliases": [
+        "shion"
+      ]
+    },
+    {
+      "code": "TRGR",
+      "name": "Targhar"
+    },
+    {
+      "code": "THK",
+      "name": "Thakurli"
+    },
+    {
+      "code": "TNA",
+      "name": "Thane",
+      "aliases": [
+        "thana"
+      ]
+    },
+    {
+      "code": "TKNG",
+      "name": "Tilak Nagar"
+    },
+    {
+      "code": "TLA",
+      "name": "Titwala"
+    },
+    {
+      "code": "TUH",
+      "name": "Turbhe"
+    },
+    {
+      "code": "ULNR",
+      "name": "Ulhasnagar"
+    },
+    {
+      "code": "UOI",
+      "name": "Umroli"
+    },
+    {
+      "code": "VDLR",
+      "name": "Vadala Road"
+    },
+    {
+      "code": "VTN",
+      "name": "Vaitarna"
+    },
+    {
+      "code": "VGI",
+      "name": "Vangani"
+    },
+    {
+      "code": "VGN",
+      "name": "Vangaon"
+    },
+    {
+      "code": "BSR",
+      "name": "Vasai Road",
+      "aliases": [
+        "bassein road",
+        "vasai"
+      ]
+    },
+    {
+      "code": "VSH",
+      "name": "Vashi"
+    },
+    {
+      "code": "VSD",
+      "name": "Vasind"
+    },
+    {
+      "code": "VVH",
+      "name": "Vidyavihar",
+      "aliases": [
+        "vidya vihar"
+      ]
+    },
+    {
+      "code": "VK",
+      "name": "Vikhroli"
+    },
+    {
+      "code": "VLP",
+      "name": "Ville Parle"
+    },
+    {
+      "code": "VR",
+      "name": "Virar"
+    },
+    {
+      "code": "VLDI",
+      "name": "Vitthalwadi"
+    }
+  ]
+}
