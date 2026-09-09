@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 // Imported through the `@/` alias on purpose: this test doubles as the check
 // that path resolution works under Vitest.
-import { formatBufferMinutes, formatTime12h } from "@/lib/format";
+import { formatMinutes, formatTime12h } from "@/lib/format";
 
 describe("formatTime12h", () => {
   it("formats an afternoon time in 12-hour form", () => {
@@ -30,22 +30,22 @@ describe("formatTime12h", () => {
   });
 });
 
-describe("formatBufferMinutes", () => {
+describe("formatMinutes", () => {
   it("leaves a sub-hour buffer in minutes", () => {
-    expect(formatBufferMinutes(45)).toBe("45 min");
+    expect(formatMinutes(45)).toBe("45 min");
   });
 
   it("shows zero minutes rather than nothing", () => {
-    expect(formatBufferMinutes(0)).toBe("0 min");
+    expect(formatMinutes(0)).toBe("0 min");
   });
 
   it("drops the minutes on a whole number of hours", () => {
-    expect(formatBufferMinutes(60)).toBe("1h");
-    expect(formatBufferMinutes(120)).toBe("2h");
+    expect(formatMinutes(60)).toBe("1h");
+    expect(formatMinutes(120)).toBe("2h");
   });
 
   it("splits hours and minutes past the hour", () => {
-    expect(formatBufferMinutes(75)).toBe("1h 15m");
-    expect(formatBufferMinutes(59)).toBe("59 min");
+    expect(formatMinutes(75)).toBe("1h 15m");
+    expect(formatMinutes(59)).toBe("59 min");
   });
 });

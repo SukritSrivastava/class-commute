@@ -66,7 +66,7 @@ export interface TrainsBetweenResult {
   count: number;
 }
 
-type RailRadarErrorKind =
+export type RailRadarErrorKind =
   | "TIMEOUT"
   | "NETWORK"
   | "UNAUTHORIZED"
@@ -295,7 +295,21 @@ export function clearTrainsBetweenCache(): void {
   trainsBetweenCache.clear();
 }
 
-/** True when RailRadar actually recognized the station code (name differs from the raw code). */
+/**
+ * True when RailRadar actually recognized the station code.
+ *
+ * **Do not delete this as a redundant check, and do not skip it on a new
+ * endpoint.** It defends against a trap in the upstream API: RailRadar does not
+ * 404 a station code it has never heard of. It returns a *success* envelope with
+ * an empty `trains` array and — the part that makes it dangerous — echoes the
+ * invalid code back in the `name` field. So a request for the nonsense code
+ * `XXXX` comes back as `{ from: { code: "XXXX", name: "XXXX" }, trains: [] }`,
+ * which is indistinguishable from a real station that happens to have no trains.
+ *
+ * Comparing `name` against `code` is the only signal available. Without it a
+ * typo'd station tells the user "no trains found" — sending them to look for a
+ * different train — instead of "that isn't a station".
+ */
 export function isRecognizedStation(station: { code: string; name: string }): boolean {
   return station.name.trim().toUpperCase() !== station.code.trim().toUpperCase();
 }

@@ -36,12 +36,12 @@ test("full flow: type two stations, submit, change buffer, submit again", async 
 
   // --- type two station names, character by character ---
   await page
-    .getByRole("combobox", { name: "Home station" })
+    .getByRole("combobox", { name: "From" })
     .pressSequentially("borivali", { delay: 40 });
   await page.getByRole("option", { name: /borivali/i }).first().click();
 
   await page
-    .getByRole("combobox", { name: "College station" })
+    .getByRole("combobox", { name: "To" })
     .pressSequentially("churchgate", { delay: 40 });
   await page.getByRole("option", { name: /churchgate/i }).first().click();
 

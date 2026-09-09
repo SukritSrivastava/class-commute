@@ -8,9 +8,17 @@ import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
  * Someone opens this app standing on a platform at Borivali with one bar of
  * signal. The network is not a dependency we get to assume — it is the thing
  * most likely to be missing at the exact moment the answer is needed. So the
- * shell, the fonts, the CSS and the station list are all on the device before
- * they are wanted, and the only thing that ever needs the network is the
- * timetable itself.
+ * shell, the CSS and the station list are all on the device before they are
+ * wanted, and the only thing that ever needs the network is the timetable.
+ *
+ * **The fonts are not precached, deliberately.** Serwist's default glob does
+ * not match `.woff2`, and adding it would put ~140KB of display and body faces
+ * into the first-visit download — on the bad connection this whole design is
+ * about — to change how offline text *looks* rather than whether it is there.
+ * `next/font` emits a metric-matched local fallback for each face, so offline
+ * text is fully legible and shifts nothing; the real faces arrive from the HTTP
+ * cache on any visit that has already loaded once. Verify with the manifest
+ * dump rather than assuming: this comment has been wrong before.
  *
  * Bundled by `@serwist/cli` (see `serwist.config.mjs`), which injects the
  * precache manifest where `self.__SW_MANIFEST` appears below.

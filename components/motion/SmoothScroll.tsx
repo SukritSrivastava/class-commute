@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import Lenis from "lenis";
+// Type only — the implementation is imported dynamically below, so nothing
+// from `lenis` reaches the first-load bundle.
+import type Lenis from "lenis";
 import { prefersReducedMotion, watchReducedMotion } from "./reducedMotion";
 
 /**
@@ -30,9 +32,26 @@ export default function SmoothScroll() {
   useEffect(() => {
     let lenis: Lenis | null = null;
     let frame = 0;
+    let loading = false;
+    let disposed = false;
 
-    const start = () => {
-      if (lenis || prefersReducedMotion()) return;
+    const start = async () => {
+      if (lenis || loading || disposed || prefersReducedMotion()) return;
+      loading = true;
+
+      // 18KB of JavaScript that renders no markup and changes only how a
+      // scroll interpolates, fetched here rather than in the first load —
+      // after paint, on a page that usually fits in one screen. Someone who
+      // has asked for reduced motion never downloads it at all, because the
+      // guard above returns before this line.
+      const { default: Lenis } = await import("lenis");
+
+      loading = false;
+      // The chunk took a network round trip to arrive. The effect may have been
+      // torn down in that time, or the preference may have flipped — either way
+      // there is nothing left to start, and constructing one now would leak a
+      // rAF loop nothing can cancel.
+      if (disposed || lenis || prefersReducedMotion()) return;
 
       lenis = new Lenis({
         // Matches --ease-signature. Lenis takes the curve as a function rather
@@ -59,13 +78,17 @@ export default function SmoothScroll() {
       lenis = null;
     };
 
-    start();
+    void start();
 
     // The preference can change while the page is open — a system-wide toggle,
     // or a battery saver flipping it. Honour it immediately in both directions.
-    const unwatch = watchReducedMotion((reduced) => (reduced ? stop() : start()));
+    const unwatch = watchReducedMotion((reduced) => {
+      if (reduced) stop();
+      else void start();
+    });
 
     return () => {
+      disposed = true;
       unwatch();
       stop();
     };

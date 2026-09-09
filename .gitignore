@@ -24,11 +24,10 @@
 .DS_Store
 *.pem
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+# debug / run logs
+# Generic: every acceptance and generator run in this project writes a .log at
+# the root, and naming them one at a time is how three dead entries accumulated.
+*.log
 
 # env files (can opt-in for committing if needed)
 .env*
@@ -53,24 +52,12 @@ next-env.d.ts
 # bundle analyzer output
 /.next/analyze/
 
-# station generator run logs (the generated JSON itself IS committed)
-/.stations-refresh.log
-
-# acceptance-run server log
-/dev-acceptance.log
-
-# identity preview render (regenerate with IDENTITY_PREVIEW=1)
+# Generated renders. design-shots/ is deliberately NOT here — those six states
+# are committed evidence and the README embeds one of them.
 /identity-preview.png
 
-# service worker build output (generated from app/sw.ts by `npm run build`).
-# The icons in public/icons/ ARE committed — those are generated once, by hand.
+# Service worker build output (generated from app/sw.ts by `npm run build`).
+# The icons in public/icons/ ARE committed — those are generated once, by hand,
+# and the station list in lib/data/ is committed for the same reason.
 /public/sw.js
 /public/sw.js.map
-
-# acceptance-run server log
-/offline-acceptance.log
-
-# offline proof render (regenerate by running the offline acceptance spec)
-/offline-proof.png
-/interchange-proof.png
-/interchange*.log

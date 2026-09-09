@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useId, useMemo, useState } from "react";
-import StationAutocomplete from "@/components/StationAutocomplete";
+import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import JourneyPicker from "@/components/JourneyPicker";
 import BufferStepper from "@/components/BufferStepper";
 import ResultCard from "@/components/ResultCard";
+import ErrorCard from "@/components/ErrorCard";
+import MumbaiClock from "@/components/MumbaiClock";
+import { Press, Reveal, Stagger } from "@/components/motion";
 import type { StationOption } from "@/lib/stations";
 import type { Journey } from "@/lib/journeys";
 import { cn } from "@/lib/cn";
@@ -57,6 +61,14 @@ const LAST_ROUTE_KEY = "class-commute:last-route";
  */
 const REVALIDATE_AFTER_MS = 15 * 60 * 1000;
 
+/**
+ * The shared easing curve and the interface duration, handed to `motion` in the
+ * form it wants. Nothing here invents its own timing — these are the same
+ * numbers as `--ease-signature` and `--duration-ui` in globals.css.
+ */
+const EASE_SIGNATURE = [0.16, 1, 0.3, 1] as const;
+const FORM_TRANSITION = { duration: 0.2, ease: EASE_SIGNATURE } as const;
+
 function rememberRoute(params: BestTrainParams): void {
   try {
     localStorage.setItem(LAST_ROUTE_KEY, JSON.stringify(params));
@@ -93,7 +105,6 @@ function formatAsOf(at: string | number): string {
 export default function Home() {
   const [home, setHome] = useState<StationOption | null>(null);
   const [college, setCollege] = useState<StationOption | null>(null);
-  const [swapCount, setSwapCount] = useState(0);
   const [classStartTime, setClassStartTime] = useState("");
   const [bufferMinutes, setBufferMinutes] = useState(20);
   // null = follow the guess below, which tracks the class time as it changes.
@@ -165,10 +176,15 @@ export default function Home() {
     };
   }, []);
 
+  /**
+   * Swaps the two stations. Used to also bump a counter that was fed to each
+   * autocomplete as a `key`, forcing a remount, because the component copied
+   * `value` into its own state and would otherwise keep showing the old name.
+   * `StationAutocomplete` is properly controlled now, so this is just the swap.
+   */
   function swapStations() {
     setHome(college);
     setCollege(home);
-    setSwapCount((c) => c + 1);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -216,243 +232,280 @@ export default function Home() {
     setStatus("success");
   }
 
+
+  const showResults = status === "success" && result !== null;
+
+  /**
+   * The form gives up the screen once there is an answer. Everything stays
+   * mounted and reachable — the stations are still editable, and one tap brings
+   * the time and buffer back — but on a phone the answer gets the viewport,
+   * which is the whole point of a one-screen layout.
+   */
+  const formCollapsed = showResults;
+
   return (
-    <div className="flex flex-1 flex-col items-center px-4 pb-16">
-      <header className="w-full max-w-md pt-10 pb-6 text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
-          Class Commute
-        </h1>
-        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-          The latest local that still gets you there on time.
-        </p>
+    <div className="flex flex-1 flex-col items-center px-4 pb-10">
+      <header className="flex w-full max-w-md items-baseline justify-between gap-3 pt-6 pb-5">
+        <h1 className="type-display text-2xl text-ink">Class Commute</h1>
+        <MumbaiClock />
       </header>
 
       <main className="w-full max-w-md">
-        <form
-          onSubmit={handleSubmit}
-          noValidate
-          className="space-y-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
-        >
-          <div className="relative space-y-4">
-            <StationAutocomplete
-              key={`home-${swapCount}`}
-              label="Home station"
-              placeholder="e.g. Borivali"
-              value={home}
-              onChange={(s) => {
-                setHome(s);
-                if (s) setFieldErrors((f) => ({ ...f, home: false }));
-              }}
-              invalid={fieldErrors.home}
-            />
+        <LayoutGroup>
+          <motion.form
+            layout
+            onSubmit={handleSubmit}
+            noValidate
+            transition={FORM_TRANSITION}
+            className="rounded-2xl border border-hairline bg-night-2/40 p-4"
+          >
+            <motion.div layout="position" transition={FORM_TRANSITION}>
+              <JourneyPicker
+                home={home}
+                college={college}
+                onHomeChange={(station) => {
+                  setHome(station);
+                  if (station) setFieldErrors((f) => ({ ...f, home: false }));
+                }}
+                onCollegeChange={(station) => {
+                  setCollege(station);
+                  if (station) setFieldErrors((f) => ({ ...f, college: false }));
+                }}
+                onSwap={swapStations}
+                homeInvalid={fieldErrors.home}
+                collegeInvalid={fieldErrors.college}
+                searching={status === "loading"}
+              />
+            </motion.div>
 
-            <div className="flex justify-center">
+            {(fieldErrors.home || fieldErrors.college) && (
+              <p className="mt-3 text-xs text-magenta" role="alert">
+                Pick both stations from the suggestions.
+              </p>
+            )}
+
+            {/* Collapsed away once the answer is on screen. Animated with
+                `layout`, so the cards below move with it rather than jumping
+                when a height transition finishes. */}
+            <AnimatePresence initial={false}>
+              {!formCollapsed && (
+                <motion.div
+                  key="details"
+                  layout
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={FORM_TRANSITION}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-4 grid grid-cols-[1fr_auto] gap-3">
+                    <div>
+                      <label
+                        htmlFor={timeInputId}
+                        className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-dim"
+                      >
+                        Class starts
+                      </label>
+                      <input
+                        id={timeInputId}
+                        type="time"
+                        value={classStartTime}
+                        onChange={(e) => {
+                          setClassStartTime(e.target.value);
+                          if (e.target.value) {
+                            setFieldErrors((f) => ({ ...f, time: false }));
+                          }
+                        }}
+                        aria-invalid={fieldErrors.time || undefined}
+                        className={cn(
+                          "type-numeric h-12 w-full rounded-xl border bg-night-2 px-3 text-base text-ink outline-none",
+                          fieldErrors.time ? "border-magenta" : "border-hairline"
+                        )}
+                      />
+                      {fieldErrors.time && (
+                        <p className="mt-1 text-xs text-magenta" role="alert">
+                          Required
+                        </p>
+                      )}
+                    </div>
+
+                    <BufferStepper
+                      value={bufferMinutes}
+                      onChange={setBufferMinutes}
+                    />
+                  </div>
+
+                  <div className="mt-3">
+                    <span
+                      id={dayGroupId}
+                      className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-dim"
+                    >
+                      Class day
+                    </span>
+                    <div
+                      role="radiogroup"
+                      aria-labelledby={dayGroupId}
+                      className="flex h-12 items-stretch overflow-hidden rounded-xl border border-hairline bg-night-2"
+                    >
+                      {JOURNEY_DAYS.map((option) => {
+                        const selected = journeyDay === option.value;
+                        return (
+                          <Press
+                            key={option.value}
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            onClick={() => setJourneyDayOverride(option.value)}
+                            className={cn(
+                              "flex-1 text-base font-medium transition-colors",
+                              selected
+                                ? "bg-gold text-on-accent"
+                                : "text-ink-muted hover:bg-night-3 hover:text-ink"
+                            )}
+                          >
+                            {option.label}
+                          </Press>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <motion.div layout transition={FORM_TRANSITION} className="mt-4">
+              <Press
+                type="submit"
+                disabled={status === "loading"}
+                className="bg-sunset flex h-14 w-full items-center justify-center rounded-xl text-base font-semibold text-on-accent disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {status === "loading"
+                  ? "Searching the route…"
+                  : formCollapsed
+                    ? "Search again"
+                    : "Find my train"}
+              </Press>
+            </motion.div>
+
+            {formCollapsed && (
               <button
                 type="button"
-                onClick={swapStations}
-                aria-label="Swap home and college stations"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-500 transition-transform hover:text-teal-600 active:scale-90 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400"
-              >
-                <svg
-                  aria-hidden
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  className="h-4 w-4"
-                >
-                  <path
-                    d="M6 3v11M6 14 3 11m3 3 3-3M14 17V6m0 0 3 3m-3-3-3 3"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            <StationAutocomplete
-              key={`college-${swapCount}`}
-              label="College station"
-              placeholder="e.g. Churchgate"
-              value={college}
-              onChange={(s) => {
-                setCollege(s);
-                if (s) setFieldErrors((f) => ({ ...f, college: false }));
-              }}
-              invalid={fieldErrors.college}
-            />
-          </div>
-
-          {(fieldErrors.home || fieldErrors.college) && (
-            <p className="text-xs text-red-600" role="alert">
-              Please pick both stations from the suggestions.
-            </p>
-          )}
-
-          <div>
-            <span
-              id={dayGroupId}
-              className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-            >
-              Class day
-            </span>
-            <div
-              role="radiogroup"
-              aria-labelledby={dayGroupId}
-              className="flex h-12 items-stretch overflow-hidden rounded-xl border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900"
-            >
-              {JOURNEY_DAYS.map((option) => {
-                const selected = journeyDay === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    onClick={() => setJourneyDayOverride(option.value)}
-                    className={cn(
-                      "flex-1 text-base font-medium transition-colors",
-                      selected
-                        ? "bg-teal-700 text-white"
-                        : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label
-                htmlFor={timeInputId}
-                className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-              >
-                Class start time
-              </label>
-              <input
-                id={timeInputId}
-                type="time"
-                value={classStartTime}
-                onChange={(e) => {
-                  setClassStartTime(e.target.value);
-                  if (e.target.value) setFieldErrors((f) => ({ ...f, time: false }));
+                onClick={() => {
+                  setStatus("idle");
+                  setResult(null);
+                  setCachedAt(null);
                 }}
-                aria-invalid={fieldErrors.time || undefined}
-                className={cn(
-                  "h-12 w-full rounded-xl border bg-white px-3 text-base tabular-nums text-neutral-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/30 dark:bg-neutral-900 dark:text-neutral-100",
-                  fieldErrors.time
-                    ? "border-red-500"
-                    : "border-neutral-300 dark:border-neutral-700"
-                )}
-              />
-              {fieldErrors.time && (
-                <p className="mt-1 text-xs text-red-600" role="alert">
-                  Required
-                </p>
-              )}
-            </div>
+                className="mt-2 min-h-11 w-full text-xs text-ink-dim underline underline-offset-4 hover:text-ink-muted"
+              >
+                Change time or buffer
+              </button>
+            )}
+          </motion.form>
 
-            <BufferStepper value={bufferMinutes} onChange={setBufferMinutes} />
-          </div>
-
-          <button
-            type="submit"
-            disabled={status === "loading"}
-            className="flex h-14 w-full items-center justify-center rounded-xl bg-teal-700 text-base font-semibold text-white transition-colors hover:bg-teal-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
+          {/* Polite, so an answer is announced without stealing focus from
+              whatever a keyboard user was doing. */}
+          <motion.div
+            layout
+            transition={FORM_TRANSITION}
+            aria-live="polite"
+            className="mt-5 space-y-3"
           >
-            {status === "loading" ? "Finding your train…" : "Find my train"}
-          </button>
-        </form>
-
-        <div aria-live="polite" className="mt-6 space-y-3">
-          {status === "loading" && (
-            <div className="space-y-3">
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="h-20 animate-pulse rounded-2xl bg-neutral-200 dark:bg-neutral-800"
-                />
-              ))}
-            </div>
-          )}
-
-          {status === "error" && errorMessage && (
-            <div
-              role="alert"
-              data-testid="result-error"
-              className={cn(
-                "rounded-2xl border p-4 text-sm",
-                errorKind === "RATE_LIMIT"
-                  ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-300"
-                  : "border-red-200 bg-red-50 text-red-800 dark:border-red-800/50 dark:bg-red-950/40 dark:text-red-300"
-              )}
-            >
-              {errorMessage}
-            </div>
-          )}
-
-          {status === "success" && result && (
-            <div className="space-y-3">
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                {result.from.name} → {result.to.name}
+            {status === "loading" && (
+              <p className="type-numeric text-center text-xs text-ink-dim">
+                Searching {home?.name ?? "route"} → {college?.name ?? "route"}…
               </p>
+            )}
 
-              {/* This answer came off the device, not the network. Marked
-                  rather than passed off as live: the times are almost certainly
-                  still right, but the user is the one standing on the platform
-                  and gets to decide how much to trust a saved answer. */}
-              {cachedAt !== null && (
-                <p
-                  data-testid="cached-notice"
-                  className="flex items-center gap-2 rounded-xl border border-hairline bg-night-2 px-3 py-2 text-xs text-ink-muted"
-                >
-                  <span
-                    aria-hidden
-                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-orange"
-                  />
-                  <span>
-                    Saved answer, as of{" "}
-                    <span className="type-numeric text-ink">
-                      {formatAsOf(cachedAt)}
+            {status === "error" && errorMessage && (
+              <Reveal>
+                <ErrorCard kind={errorKind} message={errorMessage} />
+              </Reveal>
+            )}
+
+            {showResults && result && (
+              <Stagger className="space-y-3">
+                <Reveal>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="truncate text-sm text-ink-muted">
+                      {result.from.name} <span className="text-ink-dim">→</span>{" "}
+                      {result.to.name}
+                    </p>
+                    <span className="type-numeric shrink-0 text-xs uppercase tracking-wider text-ink-dim">
+                      {result.journeyDay}
                     </span>
-                    . Check the board when you arrive.
-                  </span>
-                </p>
-              )}
-
-              {/* A different staleness: the *server* fell back to an old
-                  timetable, because RailRadar was unreachable or the monthly
-                  quota is nearly spent. Worth saying even on a live response. */}
-              {cachedAt === null && result.stale && result.timetableAsOf && (
-                <p className="text-xs text-amber-700 dark:text-amber-400">
-                  Timetable as of {formatAsOf(result.timetableAsOf)}. Times
-                  should still be right, but check the board.
-                </p>
-              )}
-              <ResultCard journey={result.best} variant="best" />
-
-              {result.alternatives.length > 0 && (
-                <div className="pt-2">
-                  <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-                    Earlier backups
-                  </h2>
-                  <div className="space-y-2">
-                    {result.alternatives.map((alt) => (
-                      <ResultCard
-                        key={alt.legs.map((l) => l.trainNumber).join("-")}
-                        journey={alt}
-                        variant="alt"
-                      />
-                    ))}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+                </Reveal>
+
+                {/* This answer came off the device, not the network. Marked
+                    rather than passed off as live: the times are almost
+                    certainly still right, but the user is the one standing on
+                    the platform and gets to decide how far to trust it. */}
+                {cachedAt !== null && (
+                  <Reveal>
+                    <p
+                      data-testid="cached-notice"
+                      className="flex items-start gap-2 rounded-xl border border-orange/30 bg-orange/5 px-3 py-2 text-xs text-ink-muted"
+                    >
+                      <span
+                        aria-hidden
+                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-orange"
+                      />
+                      <span>
+                        Saved answer, as of{" "}
+                        <span className="type-numeric text-ink">
+                          {formatAsOf(cachedAt)}
+                        </span>
+                        . Check the board when you arrive.
+                      </span>
+                    </p>
+                  </Reveal>
+                )}
+
+                {/* A different staleness: the *server* fell back to an old
+                    timetable, because RailRadar was unreachable or the monthly
+                    quota is nearly spent. Worth saying even on a live answer. */}
+                {cachedAt === null && result.stale && result.timetableAsOf && (
+                  <Reveal>
+                    <p className="rounded-xl border border-orange/30 bg-orange/5 px-3 py-2 text-xs text-ink-muted">
+                      Timetable as of{" "}
+                      <span className="type-numeric text-ink">
+                        {formatAsOf(result.timetableAsOf)}
+                      </span>
+                      . Times should still be right, but check the board.
+                    </p>
+                  </Reveal>
+                )}
+
+                <Reveal>
+                  <ResultCard
+                    journey={result.best}
+                    variant="best"
+                    countdown={result.journeyDay === "today"}
+                  />
+                </Reveal>
+
+                {result.alternatives.length > 0 && (
+                  <Reveal>
+                    <div className="pt-1">
+                      <h2 className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-ink-dim">
+                        Earlier backups
+                      </h2>
+                      <div className="space-y-2">
+                        {result.alternatives.map((alt) => (
+                          <ResultCard
+                            key={alt.legs.map((l) => l.trainNumber).join("-")}
+                            journey={alt}
+                            variant="alt"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </Reveal>
+                )}
+              </Stagger>
+            )}
+          </motion.div>
+        </LayoutGroup>
       </main>
     </div>
   );

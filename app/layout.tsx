@@ -12,19 +12,36 @@ import "./globals.css";
  * heavy *and* condensed rather than needing a separate Archivo Condensed. It is
  * the only font on the page doing aesthetic work, and it is used in maybe three
  * places; that ratio is the point.
+ *
+ * **The only preloaded face.** Carrying two axes makes the latin subset 88KB —
+ * five times either Geist — and the `<h1>` set in it is the page's LCP element,
+ * so this is the one font whose arrival is worth spending priority on. The
+ * other two are deliberately not preloaded (see below); with all three racing,
+ * measured LCP was 3.0s on simulated 4G.
  */
 const archivo = Archivo({
   variable: "--font-archivo",
   subsets: ["latin"],
   axes: ["wdth"],
   display: "swap",
+  preload: true,
 });
 
-/** UI — everything that is read rather than looked at. */
+/**
+ * UI — everything that is read rather than looked at.
+ *
+ * `preload: false` is not "load it late": the stylesheet still references it,
+ * so the browser discovers and fetches it while parsing CSS. What it gives up
+ * is a place in the preload race against Archivo, which is the face the
+ * headline is actually waiting on. Body text paints immediately in the
+ * metric-matched `Geist Fallback` and swaps with no layout shift — the
+ * `adjustFontFallback` next/font emits is what makes that free.
+ */
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
   display: "swap",
+  preload: false,
 });
 
 /** NUMERIC — anything that aligns in a column or ticks. Tabular by default. */
@@ -32,6 +49,7 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {

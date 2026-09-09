@@ -110,7 +110,13 @@ body {
 }
 
 /* One focus treatment everywhere, in cyan: it is the only accent not otherwise
-   spoken for, so a focus ring can never be confused with a state. */
+   spoken for, so a focus ring can never be confused with a state.
+
+   Do not put `transition-colors` on a focusable element. In Tailwind v4 that
+   utility includes `outline-color`, so the ring below fades up from whatever
+   the element's text colour is instead of appearing in cyan — the indicator is
+   never missing, but for 150ms it is the wrong one. Transition the specific
+   property you meant (usually `border-color`) instead. */
 :focus-visible {
   outline: 2px solid var(--color-cyan);
   outline-offset: 2px;
@@ -180,6 +186,19 @@ body {
   background-image: var(--gradient-sunset);
   background-clip: text;
   color: transparent;
+}
+
+/* The buffer stepper carries its own −/+ controls, so the browser's tiny native
+   spinners are a second set of the same buttons crowding a field that now also
+   has to fit the word "min". */
+@utility no-spinner {
+  appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+  }
 }
 
 /* Hairline helpers, so nobody hand-writes an rgba border again. */
@@ -264,6 +283,34 @@ body {
   filter: brightness(1.08);
 }
 
+/**
+ * The one looping animation in the app, and the only place a loop is defensible:
+ * a sweep of the sunset gradient down the journey line while a route is being
+ * looked up. It is pointed at the thing actually being searched, and it stops
+ * the moment there is an answer.
+ *
+ * Nothing in the *results* ever loops. That is information, not a screensaver.
+ */
+@keyframes journey-sweep {
+  from {
+    transform: translateY(-120%);
+  }
+  to {
+    transform: translateY(320%);
+  }
+}
+
+.journey-line-sweep {
+  background-image: linear-gradient(
+    180deg,
+    transparent,
+    var(--color-magenta),
+    var(--color-gold),
+    transparent
+  );
+  animation: journey-sweep 1.4s var(--ease-signature) infinite;
+}
+
 /* ---------------------------------------------------------------------------
    Lenis
 
@@ -317,5 +364,14 @@ html.lenis body {
   [data-press]:active:not(:disabled) {
     transform: none;
     filter: none;
+  }
+
+  /* The loading sweep stops moving and becomes a static gradient, so the line
+     still reads as "busy" without anything travelling down it. */
+  .journey-line-sweep {
+    animation: none;
+    inset: 0;
+    height: 100%;
+    opacity: 0.6;
   }
 }

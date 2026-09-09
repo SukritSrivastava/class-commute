@@ -37,12 +37,12 @@ async function waitForServiceWorker(page: Page): Promise<void> {
 
 async function pickStations(page: Page): Promise<void> {
   await page
-    .getByRole("combobox", { name: "Home station" })
+    .getByRole("combobox", { name: "From" })
     .pressSequentially("borivali", { delay: 30 });
   await page.getByRole("option", { name: /borivali/i }).first().click();
 
   await page
-    .getByRole("combobox", { name: "College station" })
+    .getByRole("combobox", { name: "To" })
     .pressSequentially("churchgate", { delay: 30 });
   await page.getByRole("option", { name: /churchgate/i }).first().click();
 }
@@ -88,17 +88,17 @@ test("the app answers from the platform with no signal at all", async ({
 
   // ---- 5. Autocomplete, with no network ---------------------------------
   await page
-    .getByRole("combobox", { name: "Home station" })
+    .getByRole("combobox", { name: "From" })
     .pressSequentially("bori", { delay: 30 });
   await expect(page.getByRole("option", { name: /borivali/i }).first()).toBeVisible();
   console.log("OFFLINE: autocomplete resolved from the bundled station list");
 
   // An alias too — that data is bundled, not fetched.
-  await page.getByRole("combobox", { name: "Home station" }).fill("vt");
+  await page.getByRole("combobox", { name: "From" }).fill("vt");
   await expect(page.getByRole("option").first()).toBeVisible();
 
   // ---- 6. The last route returns its cached answer ----------------------
-  await page.getByRole("combobox", { name: "Home station" }).fill("");
+  await page.getByRole("combobox", { name: "From" }).fill("");
   await pickStations(page);
   await page.getByLabel("Class start time").fill("22:50");
   await page.getByRole("button", { name: "Find my train" }).click();
@@ -135,11 +135,11 @@ test("offline and never asked before: says so at once, with no spinner", async (
 
   // A route this device has never asked about.
   await page
-    .getByRole("combobox", { name: "Home station" })
+    .getByRole("combobox", { name: "From" })
     .pressSequentially("thane", { delay: 30 });
   await page.getByRole("option", { name: /thane/i }).first().click();
   await page
-    .getByRole("combobox", { name: "College station" })
+    .getByRole("combobox", { name: "To" })
     .pressSequentially("panvel", { delay: 30 });
   await page.getByRole("option", { name: /panvel/i }).first().click();
   await page.getByLabel("Class start time").fill("09:00");

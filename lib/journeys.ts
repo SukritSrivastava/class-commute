@@ -1,4 +1,5 @@
 import type { TrainLeg } from "./railradar";
+import { journeyPace, paceOf, type Pace } from "./pace";
 import { effectiveMinutes, toMinutes } from "./time";
 
 /**
@@ -21,6 +22,12 @@ export interface JourneyLeg {
   toCode: string;
   toName: string;
   arrival: string;
+  /**
+   * Fast or slow, or null when the data doesn't support a claim. Derived here
+   * rather than in the component so the rule lives in `lib/pace.ts` and is
+   * tested — see the calibration note there.
+   */
+  pace: Pace | null;
 }
 
 export interface Journey {
@@ -40,6 +47,8 @@ export interface Journey {
   bufferRemainingMinutes: number;
   /** Door to door, including any wait at the change. */
   totalMinutes: number;
+  /** The journey's pace, only set when every leg agrees. */
+  pace: Pace | null;
 }
 
 export interface JourneyContext {
@@ -58,6 +67,20 @@ export interface JourneyContext {
   minutesToReachStation?: number;
 }
 
+/**
+ * Minutes between opening the app and being on the platform, able to board.
+ *
+ * This decides which trains are *offered at all*: anything departing sooner than
+ * `now + this` is filtered out as uncatchable, so it is the difference between a
+ * useful answer and one that tells someone to run for a train they cannot reach.
+ *
+ * Ten is chosen to be wrong in the safe direction. Too high and the app hides a
+ * train that was makeable — an inconvenience, and the next one is along shortly.
+ * Too low and it recommends one that is already pulling out, which is the exact
+ * failure the whole app exists to prevent. It is a guess about the world, not a
+ * measurement, which is why it is a named constant a caller can override via
+ * `JourneyContext.minutesToReachStation`.
+ */
 export const DEFAULT_MINUTES_TO_REACH_STATION = 10;
 
 /**
@@ -143,6 +166,7 @@ function toJourneyLeg(leg: TrainLeg): JourneyLeg {
     toCode: leg.to.code,
     toName: leg.to.name,
     arrival: leg.to.arrival,
+    pace: paceOf(leg),
   };
 }
 
@@ -157,15 +181,18 @@ export function directJourneys(
     const times = usableLeg(leg, context.journeyWeekday);
     if (!times) return [];
 
+    const journeyLeg = toJourneyLeg(leg);
+
     return [
       {
         journey: {
           kind: "direct" as const,
-          legs: [toJourneyLeg(leg)],
+          legs: [journeyLeg],
           departure: leg.from.departure,
           arrival: leg.to.arrival,
           bufferRemainingMinutes: classStartMinutes - times.arrivalMinutes,
           totalMinutes: times.arrivalMinutes - times.departureMinutes,
+          pace: journeyLeg.pace,
         },
         ...times,
       },
@@ -226,15 +253,19 @@ export function interchangeJourneys(
     // is actually standing there for — not the slack left after the transfer.
     const waitMinutes = connection.departureMinutes - firstTimes.arrivalMinutes;
 
+    const legs = [toJourneyLeg(first), toJourneyLeg(connection.leg)];
+
     candidates.push({
       journey: {
         kind: "interchange",
-        legs: [toJourneyLeg(first), toJourneyLeg(connection.leg)],
+        legs,
         change: { name: options.interchangeName, waitMinutes },
         departure: first.from.departure,
         arrival: connection.leg.to.arrival,
         bufferRemainingMinutes: classStartMinutes - connection.arrivalMinutes,
         totalMinutes: connection.arrivalMinutes - firstTimes.departureMinutes,
+        // A fast leg followed by a slow one is not a fast journey.
+        pace: journeyPace(legs.map((l) => l.pace)),
       },
       departureMinutes: firstTimes.departureMinutes,
       arrivalMinutes: connection.arrivalMinutes,

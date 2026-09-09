@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { RailRadarError, searchStations, type Station } from "@/lib/railradar";
+import { upstreamFailure } from "@/lib/upstreamError";
 import { firstIssueMessage, stationSearchQuerySchema } from "@/lib/schemas";
 import { clientKey, stationSearchLimiter } from "@/lib/rateLimit";
 
@@ -82,8 +83,8 @@ export async function GET(request: NextRequest) {
     );
   } catch (err) {
     if (err instanceof RailRadarError) {
-      const status = err.kind === "RATE_LIMIT" ? 429 : 502;
-      return NextResponse.json({ error: err.message, kind: err.kind }, { status });
+      const { status, body } = upstreamFailure(err, "stations/search");
+      return NextResponse.json(body, { status });
     }
     return NextResponse.json(
       { error: "Something went wrong while searching for stations.", kind: "UNKNOWN" },

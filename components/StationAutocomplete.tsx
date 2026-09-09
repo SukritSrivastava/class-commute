@@ -30,7 +30,7 @@ interface StationAutocompleteProps {
  *
  * The network fallback below is the only remaining path that can spend quota,
  * and it is deliberately hard to reach: it needs two or more characters, no
- * local match at all, and an explicit click.
+ * local match at all, and an explicit tap.
  */
 
 /** Below this, "no match" is much more likely to be a half-typed word. */
@@ -43,7 +43,29 @@ export default function StationAutocomplete({
   onChange,
   invalid,
 }: StationAutocompleteProps) {
-  const [query, setQuery] = useState(value?.name ?? "");
+  /**
+   * What the user has typed, or null when the field is simply showing the
+   * selected station's name.
+   *
+   * This is the fix for a real bug: the field used to copy `value.name` into
+   * its own state at mount, so swapping the two stations from the parent left
+   * both inputs showing their old text. The parent papered over it by forcing a
+   * remount with a changing `key`, which threw away focus and scroll position
+   * every swap. Deriving the displayed text instead makes the component
+   * genuinely controlled, and the `key` hack is gone.
+   */
+  const [typed, setTyped] = useState<string | null>(null);
+
+  // React's documented pattern for adjusting state when a prop changes: when a
+  // new station arrives from outside, stop showing whatever was typed.
+  const [lastValue, setLastValue] = useState(value);
+  if (value !== lastValue) {
+    setLastValue(value);
+    if (value) setTyped(null);
+  }
+
+  const query = typed ?? value?.name ?? "";
+
   const [options, setOptions] = useState<StationOption[]>([]);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -55,6 +77,7 @@ export default function StationAutocomplete({
 
   const inputId = useId();
   const listboxId = useId();
+  const statusId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -69,16 +92,28 @@ export default function StationAutocomplete({
   }, []);
 
   function handleInputChange(text: string) {
-    setQuery(text);
+    setTyped(text);
     setActiveIndex(-1);
     setErrorMessage(null);
     setFallbackTried(false);
     if (value) onChange(null);
 
     // Synchronous, local, instant. No request, no debounce, no spinner.
-    const matches = searchBundledStations(text, DEFAULT_SEARCH_LIMIT);
-    setOptions(matches);
+    setOptions(searchBundledStations(text, DEFAULT_SEARCH_LIMIT));
     setOpen(text.trim().length > 0);
+  }
+
+  /**
+   * Reopens the list when someone comes back to a field they have already
+   * filled. It used to check `options.length`, which is empty after a
+   * selection — so refocusing a filled field did nothing at all, and the only
+   * way to change your mind was to delete the text.
+   */
+  function handleFocus() {
+    if (fallbackTried || errorMessage) return;
+    const matches = searchBundledStations(query, DEFAULT_SEARCH_LIMIT);
+    setOptions(matches);
+    setOpen(matches.length > 0);
   }
 
   /**
@@ -104,7 +139,7 @@ export default function StationAutocomplete({
       const data = await res.json();
 
       if (res.status === 429 || data.kind === "RATE_LIMIT") {
-        setErrorMessage("Please wait a moment and try again.");
+        setErrorMessage("Too many searches. Wait a minute and try again.");
       } else if (!res.ok) {
         setErrorMessage("Couldn't load stations. Try again.");
       } else {
@@ -127,7 +162,7 @@ export default function StationAutocomplete({
 
   function selectStation(station: StationOption) {
     onChange(station);
-    setQuery(station.name);
+    setTyped(null);
     setOptions([]);
     setOpen(false);
     setActiveIndex(-1);
@@ -136,6 +171,11 @@ export default function StationAutocomplete({
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Escape") {
       setOpen(false);
+      return;
+    }
+    if (e.key === "ArrowDown" && !open) {
+      e.preventDefault();
+      handleFocus();
       return;
     }
     if (!open || options.length === 0) return;
@@ -162,11 +202,23 @@ export default function StationAutocomplete({
     !errorMessage &&
     trimmed.length >= MIN_FALLBACK_LENGTH;
 
+  // Anything that is not a station goes here rather than into the listbox. As
+  // bare <li> children of role="listbox" a screen reader announced "Searching…"
+  // and "No matching stations." as selectable options, which is a lie about
+  // what pressing Enter would do.
+  const statusMessage = fallbackLoading
+    ? "Searching all stations…"
+    : errorMessage
+      ? errorMessage
+      : open && options.length === 0 && !showFallbackPrompt
+        ? "No matching stations."
+        : null;
+
   return (
     <div ref={containerRef} className="relative">
       <label
         htmlFor={inputId}
-        className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+        className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-dim"
       >
         {label}
       </label>
@@ -177,6 +229,7 @@ export default function StationAutocomplete({
         aria-autocomplete="list"
         aria-expanded={open}
         aria-controls={listboxId}
+        aria-describedby={statusMessage ? statusId : undefined}
         aria-activedescendant={
           activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined
         }
@@ -185,32 +238,39 @@ export default function StationAutocomplete({
         placeholder={placeholder}
         value={query}
         onChange={(e) => handleInputChange(e.target.value)}
-        onFocus={() => options.length > 0 && setOpen(true)}
+        onFocus={handleFocus}
         onKeyDown={handleKeyDown}
         className={cn(
-          "h-12 w-full rounded-xl border bg-white px-4 text-base text-neutral-900 outline-none transition-colors placeholder:text-neutral-500 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/30 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-500",
-          invalid ? "border-red-500" : "border-neutral-300 dark:border-neutral-700"
+          // `transition-[border-color]`, not `transition-colors`: the latter
+          // covers `outline-color` in Tailwind v4, which put the shared cyan
+          // focus ring on a 150ms fade up from the text colour. A focus
+          // indicator that arrives late is not the one focus treatment the
+          // palette promises — only the hover border should move.
+          "h-12 w-full rounded-xl border bg-night-2 px-4 text-base text-ink outline-none transition-[border-color] placeholder:text-ink-dim",
+          invalid
+            ? "border-magenta"
+            : "border-hairline hover:border-hairline-strong"
         )}
       />
 
-      {open && (
-        <ul
-          id={listboxId}
-          role="listbox"
-          className="absolute z-10 mt-1.5 max-h-64 w-full overflow-auto rounded-xl border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
+      {/* Out of the listbox, announced as status rather than as an option. */}
+      {statusMessage && (
+        <p
+          id={statusId}
+          role="status"
+          className={cn(
+            "mt-1.5 text-xs",
+            errorMessage ? "text-magenta" : "text-ink-dim"
+          )}
         >
-          {fallbackLoading && (
-            <li className="px-4 py-3 text-sm text-neutral-500">Searching…</li>
-          )}
+          {statusMessage}
+        </p>
+      )}
 
-          {!fallbackLoading && errorMessage && (
-            <li className="px-4 py-3 text-sm text-red-600" role="alert">
-              {errorMessage}
-            </li>
-          )}
-
-          {!fallbackLoading &&
-            options.map((station, i) => (
+      {open && (options.length > 0 || showFallbackPrompt) && (
+        <div className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-xl border border-hairline-strong bg-night-2 shadow-2xl shadow-night">
+          <ul id={listboxId} role="listbox" className="max-h-64 overflow-auto py-1">
+            {options.map((station, i) => (
               <li
                 key={station.code}
                 id={`${listboxId}-option-${i}`}
@@ -221,45 +281,52 @@ export default function StationAutocomplete({
                   selectStation(station);
                 }}
                 onMouseEnter={() => setActiveIndex(i)}
+                /**
+                 * The active option carries the app's ordinary focus ring, not
+                 * just a tint.
+                 *
+                 * This list is driven by `aria-activedescendant`, so DOM focus
+                 * never leaves the input and the browser draws no ring on the
+                 * option at all. The tint was doing the whole job on its own,
+                 * and on this palette `night-3` on `night-2` measures 1.07:1 —
+                 * against the 3:1 that WCAG asks of a state indicator. Arrowing
+                 * down the list moved a highlight nobody could see, on the one
+                 * control every journey has to go through twice.
+                 *
+                 * Drawn inset so the panel's rounded clip can't shave it, and in
+                 * the same cyan at the same 2px as every other focused thing —
+                 * this *is* focus, as far as the person typing is concerned.
+                 */
                 className={cn(
-                  "flex min-h-11 cursor-pointer items-center justify-between gap-2 px-4 py-2.5 text-sm",
-                  i === activeIndex && "bg-teal-50 dark:bg-teal-900/30"
+                  "flex min-h-11 cursor-pointer items-center justify-between gap-2 px-4 py-2.5 text-sm text-ink",
+                  i === activeIndex &&
+                    "bg-night-3 outline-2 -outline-offset-2 outline-cyan"
                 )}
               >
-                <span className="text-neutral-900 dark:text-neutral-100">
-                  {station.name}
-                </span>
-                <span className="shrink-0 rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                <span>{station.name}</span>
+                <span className="type-numeric shrink-0 rounded bg-night-3 px-1.5 py-0.5 text-xs text-ink-dim">
                   {station.code}
                 </span>
               </li>
             ))}
+          </ul>
 
           {showFallbackPrompt && (
-            <li className="px-4 py-3 text-sm text-neutral-500">
-              No matching Mumbai station.{" "}
+            <div className="border-t border-hairline px-4 py-3 text-xs text-ink-dim">
+              Not a Mumbai suburban station.{" "}
               <button
                 type="button"
                 onMouseDown={(e) => {
                   e.preventDefault();
                   void searchUpstream();
                 }}
-                className="font-medium text-teal-700 underline dark:text-teal-400"
+                className="min-h-11 font-medium text-cyan underline underline-offset-2"
               >
                 Search all stations
               </button>
-            </li>
+            </div>
           )}
-
-          {!fallbackLoading &&
-            !errorMessage &&
-            options.length === 0 &&
-            !showFallbackPrompt && (
-              <li className="px-4 py-3 text-sm text-neutral-500">
-                No matching stations.
-              </li>
-            )}
-        </ul>
+        </div>
       )}
     </div>
   );

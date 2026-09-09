@@ -20,8 +20,8 @@ test("typing station names makes no network requests at all", async ({ page }) =
 
   await page.goto("/");
 
-  const home = page.getByRole("combobox", { name: "Home station" });
-  const college = page.getByRole("combobox", { name: "College station" });
+  const home = page.getByRole("combobox", { name: "From" });
+  const college = page.getByRole("combobox", { name: "To" });
 
   // Type character by character, the way a real user does — this is exactly
   // the pattern that used to produce a request per debounce window.
@@ -40,7 +40,7 @@ test("a match appears on the very first keystroke", async ({ page }) => {
   await page.goto("/");
 
   // No debounce and no minimum length: one character is enough, immediately.
-  await page.getByRole("combobox", { name: "Home station" }).fill("d");
+  await page.getByRole("combobox", { name: "From" }).fill("d");
 
   await expect(page.getByRole("option").first()).toBeVisible({ timeout: 1000 });
 });
@@ -52,7 +52,7 @@ test("an alias finds the station under the name people actually use", async ({
 
   // "VT" has not been this station's name since 1996, and "CSMT" is not what
   // the timetable data calls it either.
-  await page.getByRole("combobox", { name: "Home station" }).fill("vt");
+  await page.getByRole("combobox", { name: "From" }).fill("vt");
 
   await expect(page.getByRole("option").first()).toBeVisible({ timeout: 1000 });
 });

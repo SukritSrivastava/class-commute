@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { upstreamFailure } from "@/lib/upstreamError";
 import {
   RailRadarError,
   getTrainsBetween,
@@ -304,12 +305,12 @@ async function findTrain(
     );
   } catch (err) {
     if (err instanceof RailRadarError) {
-      const status =
-        err.kind === "RATE_LIMIT" ? 429 : err.kind === "TIMEOUT" ? 504 : 502;
-      return NextResponse.json(
-        { error: err.message, kind: err.kind },
-        { status, headers: { "Cache-Control": CACHE_NONE } }
-      );
+      // The detail goes to the log, not down the wire. See lib/upstreamError.ts.
+      const { status, body } = upstreamFailure(err, "best-train");
+      return NextResponse.json(body, {
+        status,
+        headers: { "Cache-Control": CACHE_NONE },
+      });
     }
     return NextResponse.json(
       { error: "Something went wrong while finding your train.", kind: "UNKNOWN" },

@@ -81,8 +81,53 @@ test("texture layers are present and completely inert", async ({ page }) => {
   );
 
   // The one control that matters is still reachable through both layers.
-  await page.getByRole("combobox", { name: "Home station" }).click();
-  await expect(page.getByRole("combobox", { name: "Home station" })).toBeFocused();
+  await page.getByRole("combobox", { name: "From" }).click();
+  await expect(page.getByRole("combobox", { name: "From" })).toBeFocused();
+});
+
+test("the route line, its dots and the swap button share one axis", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  // The rail is the centrepiece of the form, and it stops being a route the
+  // moment any of these four drift apart — a wrong offset reads as a
+  // decorative line beside the fields, which is exactly what it was. The
+  // relationship is arithmetic (see the axis note in JourneyPicker), so it can
+  // be asserted exactly rather than eyeballed in a screenshot.
+  const geometry = await page.evaluate(() => {
+    const box = (selector: string, index = 0) => {
+      const el = document.querySelectorAll(selector)[index];
+      const r = el.getBoundingClientRect();
+      return { centreX: r.x + r.width / 2, centreY: r.y + r.height / 2, top: r.y, bottom: r.bottom };
+    };
+    const rail = "[data-rail] > *";
+    return {
+      originDot: box(rail, 0),
+      line: box(rail, 1),
+      destinationDot: box(rail, 2),
+      button: box('button[aria-label^="Swap"]'),
+      fromInput: box('input[role="combobox"]', 0),
+      toInput: box('input[role="combobox"]', 1),
+    };
+  });
+
+  const axis = geometry.originDot.centreX;
+  expect(geometry.line.centreX).toBe(axis);
+  expect(geometry.destinationDot.centreX).toBe(axis);
+  expect(geometry.button.centreX).toBe(axis);
+
+  // Each dot marks the centre of the field it belongs to, and the button sits
+  // on the midpoint between them rather than in the middle of the gap.
+  expect(geometry.originDot.centreY).toBe(geometry.fromInput.centreY);
+  expect(geometry.destinationDot.centreY).toBe(geometry.toInput.centreY);
+  expect(geometry.button.centreY).toBe(
+    (geometry.originDot.centreY + geometry.destinationDot.centreY) / 2
+  );
+
+  // The line reaches both dots: no gap to leave it floating, no overshoot.
+  expect(geometry.line.top).toBe(geometry.originDot.bottom);
+  expect(geometry.line.bottom).toBe(geometry.destinationDot.top);
 });
 
 test("momentum scrolling is on by default", async ({ page }) => {
