@@ -131,7 +131,7 @@ routes.
 |---|---|
 | `npm run dev` | Development server |
 | `npm run build` | Production build, then builds the service worker |
-| `npm run typecheck` | `tsc --noEmit` |
+| `npm run typecheck` | `next typegen && tsc --noEmit` — the typegen step is required, not incidental: `app/layout.tsx` uses `LayoutProps<"/">`, which Next generates into `.next/types/` and is gitignored, so a fresh clone cannot typecheck without it |
 | `npm run lint` | ESLint |
 | `npm run test` | Unit tests (Vitest) |
 | `npm run test:e2e` | End-to-end tests (Playwright) |

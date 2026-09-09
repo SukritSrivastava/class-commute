@@ -9,7 +9,7 @@
     "lint": "eslint",
     "stations:refresh": "node --env-file=.env.local scripts/build-stations.mts",
     "icons:build": "node scripts/build-icons.mts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

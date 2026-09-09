@@ -36,6 +36,10 @@ jobs:
         if: steps.node-modules-cache.outputs.cache-hit != 'true'
         run: npm ci
 
+      # `npm run typecheck` runs `next typegen` first. It has to: app/layout.tsx
+      # uses the generated `LayoutProps<"/">` global, which lives in .next/types
+      # and is gitignored, so on a fresh checkout there is nothing to resolve it
+      # against and tsc fails before `build` has had a chance to create it.
       - name: Typecheck
         run: npm run typecheck
 
