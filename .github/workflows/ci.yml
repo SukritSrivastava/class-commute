@@ -82,8 +82,14 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
+      # `--with-deps` apt-installs Chromium's system libraries. It failed here in
+      # six seconds — far too fast to have been an apt run or a 150MB download —
+      # which is what an immediate "cannot install dependencies for this
+      # distribution" rejection looks like. GitHub's ubuntu-latest image already
+      # ships those libraries; `--with-deps` is for bare containers and
+      # self-hosted runners. Downloading the browser is the part that matters.
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Run Playwright tests
         run: npm run test:e2e
